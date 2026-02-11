@@ -1,7 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import { GoogleGenAI, Type } from '@google/genai';
-import dotenv from 'dotenv';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -9,100 +8,112 @@ const app = express();
 const PORT = 3002;
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: "50mb" }));
 
-const MODEL_NAME = 'gemini-3-flash-preview';
-
-app.post('/api/analyze', async (req, res) => {
+app.post("/api/analyze", async (req, res) => {
   try {
     const { input } = req.body;
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    if (!apiKey || apiKey.includes('your_actual_key_here') || apiKey.trim() === "") {
-      return res.status(400).json({ error: "Missing API Key in .env file" });
+    if (!apiKey) {
+      return res.status(400).json({ error: "Missing OPENROUTER_API_KEY" });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    let userContent = "";
 
-    const systemInstruction = `You are a cynical, highly protective consumer rights attorney. 
-    Your job is to analyze Terms of Service and Privacy Policies to warn users about potential 'traps'.
-    
-    CRITICAL RULES:
-    1. Be opinionated and blunt. 
-    2. Look for: Forced arbitration, data selling, permanent content licenses, and waiver of class-action rights.
-    3. Always return results in structured JSON.`;
+    if (input.type === "file") {
+      userContent = `Analyze the top 5 most dangerous clauses in this document:
 
-    let contents;
-    let tools = undefined;
+${input.value}`;
+    } else if (input.type === "url") {
+      userContent = `Analyze the Terms of Service and Privacy Policy for this website:
+${input.value}
 
-    if (input.type === 'file') {
-      contents = {
-        parts: [
-          { inlineData: input.value },
-          { text: "Analyze the top 5 most dangerous clauses in this document. Return JSON." }
-        ]
-      };
-    } else if (input.type === 'url') {
-      contents = `Search for the Terms of Service and Privacy Policy for this URL: ${input.value}. Analyze the top 5 risks based on the latest version available. Return JSON.`;
-      tools = [{ googleSearch: {} }];
+Identify top 5 risks.`;
     } else {
-      contents = `Analyze this legal text for top 5 risks: \n\n ${input.value}`;
+      userContent = `Analyze this legal text and identify:
+
+1. Top 5 risky clauses
+2. Overall risk score (0-100)
+3. Clear summary
+4. Expert legal opinion
+
+Text:
+${input.value}`;
     }
 
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents,
-      config: {
-        systemInstruction,
-        tools,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            companyName: { type: Type.STRING },
-            summary: { type: Type.STRING },
-            riskScore: { type: Type.NUMBER },
-            verdict: { 
-              type: Type.STRING,
-              enum: ['Safe', 'Caution', 'Risky', 'Extreme Risk']
-            },
-            criticalPoints: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  severity: { type: Type.STRING, enum: ['High', 'Medium', 'Low'] }
-                },
-                required: ['title', 'description', 'severity']
-              }
-            },
-            expertOpinion: { type: Type.STRING }
-          },
-          required: ['companyName', 'summary', 'riskScore', 'verdict', 'criticalPoints', 'expertOpinion']
-        }
+    const systemInstruction = `
+You are a cynical, highly protective consumer rights attorney.
+
+CRITICAL RULES:
+- Be blunt and opinionated.
+- Look for arbitration clauses, liability waivers, forced data sharing, auto-renew traps.
+- ALWAYS respond in STRICT VALID JSON only.
+- Do NOT include markdown.
+- Do NOT include explanation outside JSON.
+
+Return JSON in this exact structure:
+
+{
+  "companyName": "string",
+  "summary": "string",
+  "riskScore": number,
+  "verdict": "Safe | Caution | Risky | Extreme Risk",
+  "criticalPoints": [
+    {
+      "title": "string",
+      "description": "string",
+      "severity": "High | Medium | Low"
+    }
+  ],
+  "expertOpinion": "string"
+}
+`;
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3-70b-instruct",
+          messages: [
+            { role: "system", content: systemInstruction },
+            { role: "user", content: userContent }
+          ],
+          temperature: 0.2
+        })
       }
-    });
+    );
 
-    const resultText = response.text;
-    if (!resultText) {
-      return res.status(400).json({ error: "Empty response from AI" });
+    const data = await response.json();
+
+    if (!data.choices || !data.choices[0]) {
+      return res.status(500).json({ error: "Invalid AI response" });
     }
 
-    res.json(JSON.parse(resultText));
+    let resultText = data.choices[0].message.content.trim();
+
+    // Remove accidental markdown formatting
+    resultText = resultText.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    try {
+      const parsed = JSON.parse(resultText);
+      return res.json(parsed);
+    } catch (err) {
+      console.error("JSON Parse Error:", resultText);
+      return res.status(500).json({
+        error: "Model did not return valid JSON",
+        raw: resultText
+      });
+    }
+
   } catch (error) {
-    console.error('API Error:', error);
-    const errorMsg = error.toString();
-    
-    if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
-      return res.status(429).json({ error: "QUOTA_LIMIT: Free tier speed limit reached. Wait 60 seconds." });
-    }
-    if (errorMsg.includes('API_KEY_INVALID') || errorMsg.includes('403')) {
-      return res.status(403).json({ error: "AUTH_ERROR: Invalid API key" });
-    }
-    
-    res.status(500).json({ error: errorMsg });
+    console.error("API Error:", error);
+    res.status(500).json({ error: error.toString() });
   }
 });
 
