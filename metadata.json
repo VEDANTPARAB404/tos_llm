@@ -1,0 +1,5 @@
+{
+  "name": "TermsInShort",
+  "description": "A powerful AI-driven analyzer that scans Terms of Service documents or URLs to highlight the top 5 critical risks, hidden clauses, and provides an expert safety verdict.",
+  "requestFramePermissions": []
+}
