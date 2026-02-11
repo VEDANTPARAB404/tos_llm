@@ -159,7 +159,7 @@ const App: React.FC = () => {
                 Stop blindly <span className="text-primary underline decoration-primary/20 underline-offset-8">accepting.</span>
               </h1>
               <p className="text-xl text-slate-600 max-w-xl mx-auto font-medium">
-                Switching to Gemini 3 Flash for faster, high-quota scanning.
+                Unleashing AI to expose what companies hope you wont read.
               </p>
             </div>
 
@@ -253,7 +253,8 @@ const App: React.FC = () => {
       </main>
 
       <footer className="bg-white border-t border-slate-100 py-10 text-center text-slate-400 text-xs font-medium">
-        © 2024 TermsInShort. Powered by Gemini 3 Flash.
+        2026 TermsInShort. Made with ❤️ by Ved.
+
       </footer>
     </div>
   );
