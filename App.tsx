@@ -141,7 +141,6 @@ const App: React.FC = () => {
             <div className="flex flex-col -space-y-1">
               <span className="text-xl font-black text-slate-900">TermsInShort</span>
               <span className="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-1">
-                <Zap className="w-2 h-2 fill-current" /> AI Flash Mode
               </span>
             </div>
           </div>
@@ -328,3 +327,4 @@ const ResultsView: React.FC<{ result: AnalysisResult; onReset: () => void }> = (
 };
 
 export default App;
+
