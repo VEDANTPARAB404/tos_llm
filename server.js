@@ -7,7 +7,15 @@ dotenv.config();
 const app = express();
 const PORT = 3002;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://your-vercel-app-name.vercel.app"
+  ],
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 app.use(express.json({ limit: "50mb" }));
 
 app.post("/api/analyze", async (req, res) => {
