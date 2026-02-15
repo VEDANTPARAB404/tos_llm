@@ -16,3 +16,10 @@ env/
 
 # Mac system files
 .DS_Store
+.vercel
+
+# Build output
+dist/
+
+#node_modules
+node_modules/
