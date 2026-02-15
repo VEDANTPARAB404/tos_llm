@@ -3,11 +3,8 @@ import { AnalysisResult } from "../types";
 export async function analyzeToS(
   input: { type: 'url' | 'file' | 'text'; value: string | { data: string; mimeType: string } }
 ): Promise<AnalysisResult> {
-
-  const API = import.meta.env.VITE_API_URL;
-
   try {
-    const response = await fetch(`${API}/api/analyze`, {
+    const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

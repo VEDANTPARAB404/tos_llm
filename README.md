@@ -33,8 +33,7 @@ And receive a structured legal risk analysis with scoring and expert-style insig
 - Tailwind CSS
 
 ### Backend
-- Node.js
-- Express.js
+- Vercel Serverless Functions
 - OpenRouter AI
 
 ### AI Model
@@ -57,16 +56,26 @@ cd tos_llm
 
 Create `.env` file:
 ```
-VITE_API_URL=http://localhost:3000
-VITE_OPENROUTER_API_KEY=your_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
-### Running the Application
+### Running Locally
 
 ```bash
 npm install
 npm run dev
 ```
+
+Note: For local development with the API route, use `vercel dev` or deploy to Vercel.
+
+### Deploying to Vercel
+
+1. Push your code to GitHub
+2. Import the project in Vercel
+3. Add `OPENROUTER_API_KEY` to Environment Variables in Vercel dashboard
+4. Deploy!
+
+The `/api/analyze` endpoint will be automatically available as a serverless function.
 
 ## ⚠️ Disclaimer
 
