@@ -9,8 +9,8 @@ const PORT = 3002;
 
 app.use(cors({
   origin: [
-    "http://localhost:3000",
-    "https://your-vercel-app-name.vercel.app"
+    "http://localhost:5173",
+    "https://tosllm.vercel.app"
   ],
   methods: ["GET", "POST"],
   credentials: true
@@ -128,3 +128,4 @@ Return JSON in this exact structure:
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
 });
+
